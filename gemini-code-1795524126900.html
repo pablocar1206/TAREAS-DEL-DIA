@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Control de Compras y Tareas</title>
+  <style>
+    :root {
+      --bg: #121518;
+      --card: #1b2026;
+      --card-2: #232a32;
+      --text: #eef2f6;
+      --muted: #9aa6b2;
+      --accent: #2ea043;
+      --accent-hover: #3fb950;
+      --warn: #d29922;
+      --danger: #da3633;
+      --border: #2f3842;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 14px;
+    }
+
+    .app {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      font-size: 1.25rem;
+      margin: 0;
+    }
+
+    .badge {
+      font-size: 0.8rem;
+      color: var(--muted);
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 5px 10px;
+      border-radius: 999px;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+    }
+
+    .form-extra {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 0.95rem;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #58a6ff;
+    }
+
+    button {
+      border: none;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: #fff;
+      background: #30363d;
+      transition: opacity 0.15s, background 0.15s;
+    }
+
+    button:hover { opacity: 0.92; }
+
+    .btn-add { background: var(--accent); }
+    .btn-add:hover { background: var(--accent-hover); }
+    .btn-close-day { background: var(--warn); color: #111; }
+    .btn-danger-ghost {
+      background: transparent;
+      color: #f85149;
+      border: 1px solid rgba(248, 81, 73, 0.35);
+      padding: 6px 10px;
+      font-size: 0.82rem;
+    }
+    .btn-sm {
+      padding: 7px 11px;
+      font-size: 0.84rem;
+    }
+
+    .stats {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      flex: 1;
+      min-width: 110px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 1.2rem;
+    }
+
+    .stat span {
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 11px 12px;
+    }
+
+    .item.done {
+      background: #17221b;
+      border-color: #264632;
+    }
+
+    .item input[type="checkbox"] {
+      width: 22px;
+      height: 22px;
+      accent-color: var(--accent);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .item-body {
+      flex: 1;
+      min-width: 0;
+      cursor: pointer;
+    }
+
+    .item-title {
+      font-size: 0.98rem;
+      font-weight: 500;
+      word-break: break-word;
+    }
+
+    .item.done .item-title {
+      text-decoration: line-through;
+      color: var(--muted);
+    }
+
+    .item-meta {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .actions-bar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    .report-box {
+      margin-top: 14px;
+      display: none;
+    }
+
+    .report-box.show { display: block; }
+
+    textarea {
+      min-height: 210px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.84rem;
+      line-height: 1.4;
+      margin-bottom: 8px;
+    }
+
+    .toolbar-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 24px 12px;
+      background: var(--card);
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #238636;
+      color: #fff;
+      padding: 9px 16px;
+      border-radius: 999px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      z-index: 50;
+    }
+
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>Compras y Tareas del Día</h1>
+      <div class="badge" id="fechaHoy"></div>
+    </header>
+
+    <div class="stats">
+      <div class="stat">
+        <strong id="cntTotal">0</strong>
+        <span>Total</span>
+      </div>
+      <div class="stat">
+        <strong id="cntDone" style="color:#3fb950;">0</strong>
+        <span>Hechos</span>
+      </div>
+      <div class="stat">
+        <strong id="cntPending" style="color:#e3b341;">0</strong>
+        <span>Pendientes</span>
+      </div>
+    </div>
+
+    <form class="panel" id="addForm">
+      <div class="form-row">
+        <input type="text" id="itemInput" placeholder="Ej: 2 barras ángulo 1.5&quot; x 1/8&quot; o cable 2.5mm..." required autocomplete="off" />
+        <button type="submit" class="btn-add">+ Agregar</button>
+      </div>
+      <div class="form-extra">
+        <input type="text" id="provInput" placeholder="Proveedor / Lugar (opcional)" autocomplete="off" />
+        <input type="text" id="cantInput" placeholder="Cant. / Nota (opcional)" autocomplete="off" />
+      </div>
+    </form>
+
+    <div class="list" id="itemsList"></div>
+
+    <div class="actions-bar">
+      <button type="button" class="btn-close-day" id="btnCerrarDia">
+        Cerrar Día (Reporte + Limpiar Hechos)
+      </button>
+      <button type="button" class="btn-sm" id="btnVerReporte">Ver / Copiar Reporte Actual</button>
+      <button type="button" class="btn-sm" id="btnExportJson">Respaldo JSON</button>
+      <button type="button" class="btn-sm" id="btnImportJson">Cargar Respaldo</button>
+      <input type="file" id="fileJson" accept=".json" style="display:none;" />
+    </div>
+
+    <div class="panel report-box" id="reportBox">
+      <h3 style="margin:0 0 8px 0; font-size:1rem;">Reporte Generado</h3>
+      <textarea id="reportText" readonly></textarea>
+      <div class="toolbar-row">
+        <button type="button" class="btn-add btn-sm" id="btnCopiar">Copiar Reporte</button>
+        <button type="button" class="btn-sm" id="btnDescargarTxt">Descargar .TXT</button>
+        <button type="button" class="btn-sm" id="btnDescargarCsv">Descargar .CSV</button>
+        <button type="button" class="btn-sm" id="btnOcultarReporte">Ocultar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const STORAGE_KEY = "compras_diarias_v1";
+    let items = loadItems();
+
+    const fechaHoyEl = document.getElementById("fechaHoy");
+    const itemsListEl = document.getElementById("itemsList");
+    const addForm = document.getElementById("addForm");
+    const itemInput = document.getElementById("itemInput");
+    const provInput = document.getElementById("provInput");
+    const cantInput = document.getElementById("cantInput");
+    const reportBox = document.getElementById("reportBox");
+    const reportText = document.getElementById("reportText");
+    const toastEl = document.getElementById("toast");
+
+    function hoyStr() {
+      const d = new Date();
+      return d.toLocaleDateString("es-AR", {
+        weekday: "short",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      });
+    }
+
+    function fechaArchivo() {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    }
+
+    fechaHoyEl.textContent = hoyStr();
+
+    function showToast(msg) {
+      toastEl.textContent = msg;
+      toastEl.classList.add("show");
+      setTimeout(() => toastEl.classList.remove("show"), 2000);
+    }
+
+    function loadItems() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveItems() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    }
+
+    function render() {
+      const total = items.length;
+      const doneCount = items.filter(i => i.done).length;
+      const pendCount = total - doneCount;
+
+      document.getElementById("cntTotal").textContent = total;
+      document.getElementById("cntDone").textContent = doneCount;
+      document.getElementById("cntPending").textContent = pendCount;
+
+      if (items.length === 0) {
+        itemsListEl.innerHTML = `<div class="empty">No hay compras ni tareas cargadas todavía. Agregá una arriba.</div>`;
+        return;
+      }
+
+      // Pendientes primero, luego hechos
+      const ordenados = [...items].sort((a, b) => Number(a.done) - Number(b.done));
+
+      itemsListEl.innerHTML = "";
+      for (const item of ordenados) {
+        const div = document.createElement("div");
+        div.className = `item ${item.done ? "done" : ""}`;
+
+        const chk = document.createElement("input");
+        chk.type = "checkbox";
+        chk.checked = item.done;
+        chk.addEventListener("change", () => toggleItem(item.id));
+
+        const body = document.createElement("div");
+        body.className = "item-body";
+        body.addEventListener("click", () => toggleItem(item.id));
+
+        const title = document.createElement("div");
+        title.className = "item-title";
+        title.textContent = item.title;
+        body.appendChild(title);
+
+        const metaParts = [];
+        if (item.cant) metaParts.push(item.cant);
+        if (item.prov) metaParts.push(`Prov: ${item.prov}`);
+        if (metaParts.length > 0) {
+          const meta = document.createElement("div");
+          meta.className = "item-meta";
+          meta.textContent = metaParts.join(" · ");
+          body.appendChild(meta);
+        }
+
+        const delBtn = document.createElement("button");
+        delBtn.type = "button";
+        delBtn.className = "btn-danger-ghost";
+        delBtn.textContent = "Borrar";
+        delBtn.title = "Eliminar ítem";
+        delBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          deleteItem(item.id);
+        });
+
+        div.appendChild(chk);
+        div.appendChild(body);
+        div.appendChild(delBtn);
+        itemsListEl.appendChild(div);
+      }
+    }
+
+    function addItem(title, prov, cant) {
+      const cleanTitle = title.trim();
+      if (!cleanTitle) return;
+      items.unshift({
+        id: Date.now() + "-" + Math.random().toString(36).slice(2, 6),
+        title: cleanTitle,
+        prov: prov.trim(),
+        cant: cant.trim(),
+        done: false,
+        createdAt: new Date().toISOString()
+      });
+      saveItems();
+      render();
+    }
+
+    function toggleItem(id) {
+      items = items.map(i => i.id === id ? { ...i, done: !i.done } : i);
+      saveItems();
+      render();
+    }
+
+    function deleteItem(id) {
+      items = items.filter(i => i.id !== id);
+      saveItems();
+      render();
+    }
+
+    function formatItemLine(i) {
+      const extras = [];
+      if (i.cant) extras.push(i.cant);
+      if (i.prov) extras.push(i.prov);
+      const extraStr = extras.length ? ` (${extras.join(" | ")})` : "";
+      return `${i.title}${extraStr}`;
+    }
+
+    function buildReport(sourceList = items) {
+      const hechos = sourceList.filter(i => i.done);
+      const pendientes = sourceList.filter(i => !i.done);
+      const ahora = new Date().toLocaleString("es-AR");
+
+      let txt = `REPORTE DE COMPRAS / TAREAS\nFecha: ${ahora}\n`;
+      txt += `Resumen: ${hechos.length} hecho(s) | ${pendientes.length} pendiente(s)\n\n`;
+
+      txt += `=== SE HIZO / COMPRÓ (${hechos.length}) ===\n`;
+      if (hechos.length === 0) {
+        txt += `- Ninguno\n`;
+      } else {
+        hechos.forEach(i => { txt += `[x] ${formatItemLine(i)}\n`; });
+      }
+
+      txt += `\n=== QUEDÓ PENDIENTE (${pendientes.length}) ===\n`;
+      if (pendientes.length === 0) {
+        txt += `- Ninguno\n`;
+      } else {
+        pendientes.forEach(i => { txt += `[ ] ${formatItemLine(i)}\n`; });
+      }
+
+      return txt.trim();
+    }
+
+    addForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      addItem(itemInput.value, provInput.value, cantInput.value);
+      itemInput.value = "";
+      provInput.value = "";
+      cantInput.value = "";
+      itemInput.focus();
+    });
+
+    document.getElementById("btnVerReporte").addEventListener("click", () => {
+      reportText.value = buildReport(items);
+      reportBox.classList.add("show");
+      reportBox.scrollIntoView({ behavior: "smooth" });
+    });
+
+    document.getElementById("btnCerrarDia").addEventListener("click", () => {
+      const hechos = items.filter(i => i.done);
+      const pendientes = items.filter(i => !i.done);
+
+      if (items.length === 0) {
+        showToast("No hay ítems para cerrar");
+        return;
+      }
+
+      const msg =
+        `Vas a generar el reporte y BORRAR los ${hechos.length} ítem(s) tildados como HECHOS.\n` +
+        `Quedarán ${pendientes.length} ítem(s) PENDIENTES para mañana.\n\n¿Confirmar cierre del día?`;
+
+      if (!confirm(msg)) return;
+
+      reportText.value = buildReport(items);
+      reportBox.classList.add("show");
+
+      items = pendientes;
+      saveItems();
+      render();
+      showToast("Día cerrado: hechos borrados, pendientes conservados");
+      reportBox.scrollIntoView({ behavior: "smooth" });
+    });
+
+    document.getElementById("btnCopiar").addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(reportText.value);
+        showToast("Reporte copiado al portapapeles");
+      } catch {
+        reportText.select();
+        document.execCommand("copy");
+        showToast("Reporte copiado");
+      }
+    });
+
+    function downloadFile(filename, content, mime = "text/plain;charset=utf-8") {
+      const blob = new Blob([content], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    document.getElementById("btnDescargarTxt").addEventListener("click", () => {
+      downloadFile(`reporte_compras_${fechaArchivo()}.txt`, reportText.value);
+      showToast("TXT descargado");
+    });
+
+    document.getElementById("btnDescargarCsv").addEventListener("click", () => {
+      // Toma lo que haya en items + si ya se cerró el día, parsea líneas básicas o exporta pendientes actuales
+      const filas = [["Estado", "Item", "Cantidad_Nota", "Proveedor", "Fecha_Reporte"]];
+      const fRep = fechaArchivo();
+      for (const i of items) {
+        filas.push([
+          i.done ? "HECHO" : "PENDIENTE",
+          i.title,
+          i.cant || "",
+          i.prov || "",
+          fRep
+        ]);
+      }
+      const csv = filas
+        .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(";"))
+        .join("\n");
+      downloadFile(`compras_${fechaArchivo()}.csv`, "\uFEFF" + csv, "text/csv;charset=utf-8");
+      showToast("CSV descargado");
+    });
+
+    document.getElementById("btnOcultarReporte").addEventListener("click", () => {
+      reportBox.classList.remove("show");
+    });
+
+    document.getElementById("btnExportJson").addEventListener("click", () => {
+      downloadFile(`respaldo_compras_${fechaArchivo()}.json`, JSON.stringify(items, null, 2), "application/json");
+      showToast("Respaldo JSON descargado");
+    });
+
+    const fileJsonEl = document.getElementById("fileJson");
+    document.getElementById("btnImportJson").addEventListener("click", () => fileJsonEl.click());
+    fileJsonEl.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const parsed = JSON.parse(reader.result);
+          if (!Array.isArray(parsed)) throw new Error("Formato inválido");
+          items = parsed;
+          saveItems();
+          render();
+          showToast("Respaldo cargado");
+        } catch {
+          alert("El archivo JSON no es válido.");
+        }
+      };
+      reader.readAsText(file);
+      fileJsonEl.value = "";
+    });
+
+    render();
+  </script>
+</body>
+</html>
